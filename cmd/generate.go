@@ -28,6 +28,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -273,13 +274,7 @@ func generateTypeBlock(buf io.Writer, t *models.Type, asVar bool) {
 		fmt.Fprintf(buf, "\t\tBaseType: types.BaseType%s,\n", t.Enum.BaseType)
 		fmt.Fprintf(buf, "\t\tValues: models.EnumValues{\n")
 
-		keys := make([]int64, 0, len(t.Enum.Values))
-		for k := range t.Enum.Values {
-			keys = append(keys, k)
-		}
-		sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-		for _, key := range keys {
+		for _, key := range t.Enum.Values.Keys() {
 			fmt.Fprintf(buf, "\t\t\t%v: %#v,\n", key, t.Enum.Values[int64(key)])
 		}
 		fmt.Fprintf(buf, "\t\t},\n")
