@@ -126,8 +126,13 @@ var generateCmd = &cobra.Command{
 			fmt.Fprintf(typesBuf, fileHeader, packageName)
 		}
 
-		for _, nodeType := range typesMap {
-			generateTypeBlock(typesBuf, nodeType, true)
+		keys := make([]string, 0, len(typesMap))
+		for k := range typesMap {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			generateTypeBlock(typesBuf, typesMap[key], true)
 		}
 
 		outFile := out
@@ -266,9 +271,16 @@ func generateTypeBlock(buf io.Writer, t *models.Type, asVar bool) {
 	if t.Enum != nil {
 		fmt.Fprintf(buf, "\tEnum: &models.Enum{\n")
 		fmt.Fprintf(buf, "\t\tBaseType: types.BaseType%s,\n", t.Enum.BaseType)
-		fmt.Fprintf(buf, "\t\tValues: []models.NamedNumber{\n")
-		for _, value := range t.Enum.Values {
-			fmt.Fprintf(buf, "\t\t\t%#v,\n", value)
+		fmt.Fprintf(buf, "\t\tValues: models.EnumValues{\n")
+
+		keys := make([]int64, 0, len(t.Enum.Values))
+		for k := range t.Enum.Values {
+			keys = append(keys, k)
+		}
+		sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+		for _, key := range keys {
+			fmt.Fprintf(buf, "\t\t\t%v: %#v,\n", key, t.Enum.Values[int64(key)])
 		}
 		fmt.Fprintf(buf, "\t\t},\n")
 		fmt.Fprintf(buf, "\t},\n")
