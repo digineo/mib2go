@@ -53,6 +53,8 @@ var (
 	outFilename string
 	packageName string
 	paths       []string
+
+	commentReplacer = strings.NewReplacer("*/", "* /")
 )
 
 // generateCmd represents the generate command
@@ -156,6 +158,10 @@ func formatModuleName(moduleName string) (formattedName string) {
 	return
 }
 
+func formatComment(comment string) string {
+	return commentReplacer.Replace(comment)
+}
+
 func formatNodeName(nodeName string) (formattedName string) {
 	return strings.ToUpper(nodeName[:1]) + nodeName[1:]
 }
@@ -167,6 +173,8 @@ func formatNodeVarName(nodeName string) (formattedName string) {
 func generateMibFile(module gosmi.SmiModule, buf io.Writer, typesMap map[string]*models.Type) {
 	formattedModuleName := formatModuleName(module.Name)
 	nodes := module.GetNodes()
+
+	fmt.Fprintf(buf, "/*\n%s\n*/\n", formatComment(module.Description))
 
 	fmt.Fprintf(buf, "type %sModule struct {\n", formattedModuleName)
 	for _, node := range nodes {
@@ -188,6 +196,8 @@ func generateMibFile(module gosmi.SmiModule, buf io.Writer, typesMap map[string]
 		if node.Kind&allowedNodeKinds == 0 {
 			continue
 		}
+
+		fmt.Fprintf(buf, "/*\n%s\n*/\n", formatComment(node.Description))
 		fmt.Fprintf(buf, "var %s = models.%sNode{\n", formatNodeVarName(node.Name), node.Kind)
 		fmt.Fprintf(buf, "\tBaseNode: models.BaseNode{\n")
 		fmt.Fprintf(buf, "\t\tName: %q,\n", node.Name)
