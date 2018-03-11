@@ -205,6 +205,11 @@ func generateMibFile(module gosmi.SmiModule, buf io.Writer, typesMap map[string]
 
 		fmt.Fprintf(buf, "/*\n%s\n*/\n", formatComment(node.Description))
 		fmt.Fprintf(buf, "var %s = models.%sNode{\n", formatNodeVarName(node.Name), node.Kind)
+
+		if node.Kind&types.NodeColumn > 0 {
+			fmt.Fprintf(buf, "\tScalarNode: models.ScalarNode{\n")
+		}
+
 		fmt.Fprintf(buf, "\tBaseNode: models.BaseNode{\n")
 		fmt.Fprintf(buf, "\t\tName: %q,\n", node.Name)
 		oid := node.Oid
@@ -252,10 +257,14 @@ func generateMibFile(module gosmi.SmiModule, buf io.Writer, typesMap map[string]
 				if object.Kind == types.NodeScalar {
 					fmt.Fprintf(buf, "\t\t%s,\n", formatNodeVarName(object.Name))
 				} else {
-					fmt.Fprintf(buf, "\t\tmodels.ScalarNode(%s),\n", formatNodeVarName(object.Name))
+					fmt.Fprintf(buf, "\t\t%s.ScalarNode,\n", formatNodeVarName(object.Name))
 				}
 			}
 			fmt.Fprintf(buf, "\t},\n")
+		}
+
+		if node.Kind&types.NodeColumn > 0 {
+			fmt.Fprintf(buf, "},\n")
 		}
 
 		fmt.Fprintf(buf, "}\n")
